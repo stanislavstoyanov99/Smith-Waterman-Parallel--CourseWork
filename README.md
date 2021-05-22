@@ -1,1 +1,1 @@
-# Smith-Waterman-Parallel--CourseWork
+# Smith-Waterman Parallel Algorithm | CourseWork
