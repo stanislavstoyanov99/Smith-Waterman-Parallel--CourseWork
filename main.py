@@ -1,4 +1,5 @@
 import scoreMatrix
+import time
 
 # Test Cases - can be modified to be read from text file (file = open("filePath", "r"); file.read())
 
@@ -27,7 +28,7 @@ seq2 = "TTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGC
 # seq2 = "TTTAG"
 
 match = 2
-other = -1
+mismatch = -1
 maxScore = 0
 maxPosition = (0, 0)
 rowcounter = 0
