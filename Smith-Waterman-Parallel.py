@@ -1,11 +1,15 @@
 import threading
 import time
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+
 #import timeit
 # from array import array
 
 # Test Case 1
-#seq1 = "ATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCAT"
-#seq2 = "TTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAA"
+# seq1 = "ATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCAT"
+# seq2 = "TTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAA"
 
 # Test Case 2
 # seq1 = "ATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCAT"
@@ -16,18 +20,18 @@ import time
 # seq2 = "TTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAA"
 
 # Test Case 4
-seq1 = "ATAGACGACATGGGGACAGCAT"
-seq2 = "TTTAGCATGCGCATATCAGCAA"
+seq1 = "ATAGACGACATGGGGACAGCATCCC"
+seq2 = "TTTAGCATGCGCATATCAGCAAAAA"
 
 # Test Case 5
-#seq1 = "ATAGACGACAT"
-#seq2 = "TTTAGCATGCG"
+# seq1 = "ATAGACGACAT"
+# seq2 = "TTTAGCATGCG"
 
 # Test Case 6
-#seq1 = "ATAGAC"
-#seq2 = "TTTAGC"
+# seq1 = "AAAAGCATTTTTTGCA"
+# seq2 = "CCCCGCAGGGGGGGCA"
 
-match = 2
+match = 1
 mismatch = -1
 gap = -2
 maxScore = 0
@@ -47,7 +51,6 @@ def score_function(row_index, col_index):
     global score_matrix
     global maxScore
     global maxPosition
-    # print('\nWorker: %s' % num)
     similarity = match if seq1[row_index - 1] == seq2[col_index - 1] else mismatch
     diag_score = score_matrix[row_index - 1][col_index - 1] + similarity
     up_score = score_matrix[row_index - 1][col_index] + gap
@@ -77,7 +80,6 @@ def antidiagonals_indices(rows, cols):
         q = i
 
         while(p < rows + 1 and q >= 1):
-            #print(p, q)
             temp_list.append([p, q])
             p = p + 1
             q = q - 1
@@ -86,12 +88,9 @@ def antidiagonals_indices(rows, cols):
         p = i + 1
         q = cols
         while(p < rows+1 and q >= 1):
-            #print(p, q)
             temp_list.append([p, q])
             p = p + 1
             q = q - 1
-
-    # print(temp_list)
 
 
 def traceback(score_matrix, start_pos):
@@ -110,10 +109,10 @@ def traceback(score_matrix, start_pos):
                 y -= 1
             elif move == UP:
                 aligned_seq1.append(seq1[x - 1])
-                aligned_seq2.append('-')
+                aligned_seq2.append('_')
                 x -= 1
             elif move == LEFT:
-                aligned_seq1.append('-')
+                aligned_seq1.append('_')
                 aligned_seq2.append(seq2[y - 1])
                 y -= 1
             else:
@@ -126,49 +125,35 @@ def traceback(score_matrix, start_pos):
 
 
 def nextMove(score_matrix, x, y):
-
-    # Assign the diagonal score
     diag = score_matrix[x - 1][y - 1]
-    # print(diag)
     curr = score_matrix[x][y]
-    # Assign insertion/deletion scores
     up = score_matrix[x - 1][y]
     left = score_matrix[x][y - 1]
     if (curr == diag + match or curr == diag + mismatch) and curr != up + gap and curr != left + gap : return 1
     elif up > left and up>=diag: return 2
     elif left > up and left>=diag: return 3
     elif curr == 0 : return 0
-###############################################
-## Creates the alignment string for printing ##
-###############################################
 
 
 def alignment_string(aligned_seq1, aligned_seq2):
-
-    # Sets initial values
-    idents, gaps, mismatches = 0, 0, 0
+    match, gaps, mismatches = 0, 0, 0
     alignment_string = []
 
-    # Runs through both strings
     for base1, base2 in zip(aligned_seq1, aligned_seq2):
 
-        # Checks for match
         if base1 == base2:
-            alignment_string.append('|')
-            idents += 1
+            alignment_string.append('| ')
+            match += 1
 
-        # Checks for insertion/deletion
         elif '-' in (base1, base2):
             alignment_string.append(' ')
             gaps += 1
 
-        # If neither of the above, it's mismatch
         else:
-            alignment_string.append(':')
+            alignment_string.append(': ')
             mismatches += 1
 
-    # Returns the "alignment" string and the alignment characteristics
-    return ''.join(alignment_string), idents, gaps, mismatches
+    return ''.join(alignment_string), match, gaps, mismatches
 
 
 execution_start = time.time()
@@ -176,21 +161,16 @@ score_matrix = createScoreMatrix(rows, cols)
 antidiagonals_indices(rows, cols)
 
 antidiagonals = antidiagonals_list_generator(score_matrix)
-# print(antidiagonals)
 num_diag = len(antidiagonals)
 offset_counter = 0
 thread_start = time.time()
 for i in range(num_diag - 2 ):         
-    #print(i + 1)
     q = len(antidiagonals[i]) 
     x = 0
     threads.clear()
-    # print(q)
     while(x < q):
-        #print(temp_list[x + offset_counter])
         r_index = temp_list[x + offset_counter][0]
         c_index = temp_list[x + offset_counter][1]
-        #print(r_index, c_index)
         x = x + 1
 
         t = threading.Thread(target=score_function, args=(r_index, c_index))
@@ -201,43 +181,73 @@ for i in range(num_diag - 2 ):
 
     offset_counter = offset_counter + q - 1 
 
-    # print(x)
 thread_end = time.time()
-print(seq1)
-print(seq2)
-for i in score_matrix:
-    print(i)
-# for y in range(len(score_matrix)):
-# print(score_matrix[y])
-'''
-for i in range(5):
-    t = threading.Thread(target=score_function, args=(i,))
-    threads.append(t)
-    t.start()
-'''
-print(maxPosition)
-print(maxScore)
 seq1_aligned, seq2_aligned = traceback(score_matrix, maxPosition)
 assert len(seq1_aligned) == len(seq2_aligned)
 
 execution_end = time.time()
-print("Overall time to execute: {} seconds".format(
-    execution_end - execution_start))
-print("Time to run threads: {} seconds".format(thread_end - thread_start))
-# Pretty print the results. The printing follows the format of BLAST results
-# as closely as possible.
-alignment_str, idents, gaps, mismatches = alignment_string(
+alignment_str, match, gaps, mismatches = alignment_string(
     seq1_aligned, seq2_aligned)
 alength = len(seq1_aligned)
-print('\n')
-print('Identities = {0}/{1} ({2:.1%}), Gaps = {3}/{4} ({5:.1%})'.format(idents,alength, idents / alength, gaps, alength, gaps / alength))
-print('\n')
+
 for i in range(0, alength, 60):
     seq1_slice = seq1_aligned[i:i + 60]
-    print('Query  {0:<4}  {1}  {2:<4}'.format(
-        i + 1, seq1_slice, i + len(seq1_slice)))
-    print('             {0}'.format(alignment_str[i:i + 60]))
     seq2_slice = seq2_aligned[i:i + 60]
-    print('Sbjct  {0:<4}  {1}  {2:<4}'.format(
-        i + 1, seq2_slice, i + len(seq2_slice)))
-    print('\n')
+
+match_index_seq1 = seq1.index(seq1_slice)
+match_index_seq2 = seq2.index(seq2_slice)
+
+start1 = match_index_seq1 - 2 if match_index_seq1 >= 2 else 0
+end1 = match_index_seq1 + len(seq1_slice) + 2 if match_index_seq1 + len(seq1_slice) + 2 < len(seq1) else match_index_seq1 + len(seq1_slice)
+
+start2 = match_index_seq2 - 2 if match_index_seq2 >= 2 else 0
+end2 = match_index_seq2 + len(seq1_slice) + 2 if match_index_seq2 + len(seq1_slice) + 2 < len(seq1) else match_index_seq2 + len(seq1_slice)
+
+result_matrix = score_matrix[start1:end1]
+result_matrix = [row[start1:end1] for row in result_matrix]
+
+fig, (ax1, ax2) = plt.subplots(1,2)
+result_matrix = np.flip(result_matrix, axis=0)
+im = ax1.imshow(result_matrix)
+
+ax1.set_xticks(np.arange(len(seq2[start2:end2])))
+ax1.set_yticks(np.arange(len(seq1[start1:end1])))
+ax1.set_xticklabels(seq2[start2:end2])
+ax1.set_yticklabels(seq1[start1:end1][::-1])
+ax1.set_xlabel(seq2[start2:end2])
+ax1.set_ylabel(seq1[start1:end1])
+ax1.set_title('Seq {0:<4}  {1}\n               {2}\nSeq {4:<4}  {5}\nScore: {3:<4}'.format(
+            i + 1,
+            seq1_slice,
+            alignment_str[i:i + 60],
+            i+len(seq1_slice),
+            i + 2,
+            seq2_slice
+        )
+    )
+
+ax2.set_title(f"Overall time to execute: {'%1.4f' % (execution_end - execution_start)} seconds        \nTime to run threads: {'%1.4f' % (thread_end - thread_start)} seconds        ")
+
+for i in range(len(seq1[start1:end1])):
+    for j in range(len(seq2[start1:end1])):
+        text = ax1.text(j, i, result_matrix[i][j], ha="center", va="center", color="w")
+
+pie_labels = [f'Matches({match}/{alength})', f'Gaps({gaps}/{alength})', f'Missmatches({mismatches}/{alength})']
+
+# ax2.axis('equal')
+
+percents = [match/alength, gaps/alength, mismatches/alength]
+
+def filter_zeroes(pct):
+    return ('%1.1f' % pct) if pct > 0 else ''
+
+def get_new_labels(sizes, labels):
+    new_labels = [label if size > 0 else '' for size, label in zip(sizes, labels)]
+    return new_labels
+
+ax2.pie(percents, labels=get_new_labels(percents, pie_labels), autopct=filter_zeroes)
+
+figManager = plt.get_current_fig_manager()
+figManager.window.state('zoomed')
+plt.subplots_adjust(wspace=1)
+plt.show()
