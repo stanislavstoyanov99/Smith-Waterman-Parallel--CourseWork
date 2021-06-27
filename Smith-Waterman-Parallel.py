@@ -1,6 +1,7 @@
 import threading
 import time
 import numpy as np
+import yappi
 from matplotlib import pyplot as plt
 
 # Test Case 1
@@ -8,24 +9,24 @@ from matplotlib import pyplot as plt
 #seq2 = "TTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAA"
 
 # Test Case 2
-# seq1 = "ATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCAT"
-# seq2 = "TTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAA"
+#seq1 = "ATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCAT"
+#seq2 = "TTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAA"
 
 # Test Case 3
 # seq1 = "ATAGACGACATGGGGACAGCATATAGACGACATGGGGACAGCAT"
 # seq2 = "TTTAGCATGCGCATATCAGCAATTTAGCATGCGCATATCAGCAA"
 
 # Test Case 4
-# seq1 = "ATAGACGACATGGGGACAGCAT"
-# seq2 = "TTTAGCATGCGCATATCAGCAA"
+#seq1 = "ATAGACGACATGGGGACAGCAT"
+#seq2 = "TTTAGCATGCGCATATCAGCAA"
 
 # Test Case 5
-#seq1 = "ATAGACGACAT"
-#seq2 = "TTTAGCATGCG"
+seq1 = "ATAGACGACAT"
+seq2 = "TTTAGCATGCG"
 
 # Test Case 6
-seq1 = "ATAGAC"
-seq2 = "TTTAGC"
+#seq1 = "ATAGAC"
+#seq2 = "TTTAGC"
 
 match = 2
 mismatch = -1
@@ -166,6 +167,10 @@ num_diag = len(antidiagonals)
 offset_counter = 0
 thread_start = time.time()
 
+yappi.set_clock_type("wall")
+yappi.start()
+
+# Multithreading
 for i in range(num_diag - 2 ):         
     q = len(antidiagonals[i]) 
     x = 0
@@ -182,10 +187,21 @@ for i in range(num_diag - 2 ):
     for x in range(len(threads)):
         threads[x].start()
 
-    offset_counter = offset_counter + q - 1 
+    offset_counter = offset_counter + q - 1
 
 thread_end = time.time()
+yappi.stop()
 
+# Profiling info
+print('Profiling info:')
+threads = yappi.get_thread_stats()
+for thread in threads:
+    print(
+        "Function stats for (%s) (%d)" % (thread.name, thread.id)
+    )
+    stats = yappi.get_func_stats(ctx_id=thread.id).print_all()
+
+# Visualization
 print(seq1)
 print(seq2)
 
